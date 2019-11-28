@@ -29,7 +29,7 @@ RUN set -eux; \
     curl -fL -o julia.tar.gz.asc "${julia_tar_url}.asc"; \
     curl -fL -o julia.tar.gz     "${julia_tar_url}"; \
     \
-    echo "${sha256} *julia.tar.gz" | sha256sum -c -; \
+    echo "${JULIA_SHA256} *julia.tar.gz" | sha256sum -c -; \
     \
     export GNUPGHOME="$(mktemp -d)"; \
     gpg --batch --keyserver ha.pool.sks-keyservers.net --recv-keys "$JULIA_GPG"; \

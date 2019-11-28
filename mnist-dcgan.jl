@@ -1,4 +1,4 @@
-using BSON: @save
+using BSON
 using Base.Iterators: partition
 using CuArrays
 using DelimitedFiles
@@ -21,7 +21,7 @@ mutable struct DCGAN
     discriminator::Chain
 
     generator_optimizer
-    discriminator_oprimizer
+    discriminator_optimizer
 
     data::Vector{<: AbstractArray{Float32, 4}}
 
@@ -66,7 +66,7 @@ function discriminator_loss(real_output, fake_output)
 end
 
 function convert_to_image(image_array::Matrix{Float32}, channels::Int64)
-    image = @. (image + 1f0) / 2f0
+    image_array = @. (image_array + 1f0) / 2f0
     if channels == 1
         return Gray.(image_array)
     else
@@ -84,7 +84,7 @@ function save_fake_image(dcgan::DCGAN)
     for n in 0:prod(dcgan.animation_size) - 1
         j = n ÷ rows
         i = n % cols
-        tile_image[j * h + 1:(j + 1) * h, i * w + 1:(i + 1) * w] = fake_images[:, :, :, n + 1] |> cpu
+        tile_image[j * h + 1:(j + 1) * h, i * w + 1:(i + 1) * w] = fake_images[:, :, :, n + 1].data |> cpu
     end
     image = convert_to_image(tile_image, dcgan.channels)
     save(@sprintf("animation/steps_%06d.png", dcgan.train_steps), image)
@@ -99,7 +99,7 @@ function train_discriminator!(dcgan::DCGAN, batch::AbstractArray{Float32, 4})
 
     disc_loss = discriminator_loss(real_output, fake_output)
     disc_grad = gradient(()->disc_loss, Flux.params(dcgan.discriminator))
-    update!(dcgan.discriminator_optimzer, Flux.params(dcgan.discriminator), disc_grad)
+    update!(dcgan.discriminator_optimizer, Flux.params(dcgan.discriminator), disc_grad)
     
     # zero out generator gradient
     # https://github.com/FluxML/model-zoo/pull/111
@@ -130,7 +130,7 @@ function train!(dcgan::DCGAN)
                 gen_loss_data = gen_loss.data
                 push!(dcgan.discriminator_loss_hist, disc_loss_data)
                 push!(dcgan.generator_loss_hist, gen_loss_data)
-                @info("Train step $(dcgan.train_steps), Discriminator loss: $(disc_loss), Generator loss: $(gen_loss)")
+                @info("Train step $(dcgan.train_steps), Discriminator loss: $(disc_loss_data), Generator loss: $(gen_loss_data)")
                 # create fake images for animation
                 save_fake_image(dcgan)
             end
@@ -145,46 +145,52 @@ function main()
         mkdir("animation")
     end
 
+    if !isdir("result")
+        mkdir("result")
+    end
+
     noise_dim = 100
     channels = 1
 
     generator = Chain(
         Dense(noise_dim, 7 * 7 * 256; initW = glorot_normal),
-        BatchNorm(7 * 7 * 256, leakyrelu),
+        BatchNorm(7 * 7 * 256, relu),
         x->reshape(x, 7, 7, 256, :),
         ConvTranspose((5, 5), 256 => 128; init = glorot_normal, stride = 1, pad = 2),
-        BatchNorm(128, leakyrelu),
+        BatchNorm(128, relu),
         ConvTranspose((4, 4), 128 => 64; init = glorot_normal, stride = 2, pad = 1),
-        BatchNorm(64, leakyrelu),
+        BatchNorm(64, relu),
         ConvTranspose((4, 4), 64 => channels, tanh; init = glorot_normal, stride = 2, pad = 1),
         ) |> gpu
 
     discriminator =  Chain(
         Conv((4, 4), channels => 64, leakyrelu; init = glorot_normal, stride = 2, pad = 1),
-        Dropout(0.3),
+        Dropout(0.25),
         Conv((4, 4), 64 => 128, leakyrelu; init = glorot_normal, stride = 2, pad = 1),
-        Dropout(0.3),
+        Dropout(0.25), 
         x->reshape(x, 7 * 7 * 128, :),
         # drop sigmoid, and use logitbinarycrossentropy (it is more numerically stable)
         # https://github.com/FluxML/Flux.jl/issues/914
         Dense(7 * 7 * 128, 1; initW = glorot_normal)) |> gpu 
 
     dcgan = DCGAN(; image_vector = MNIST.images(), noise_dim = noise_dim, 
-        channels = channels, batch_size = 128, epochs = 1,
+        channels = channels, batch_size = 128, epochs = 30,
         generator = generator, discriminator = discriminator,
-        animation_size = 4=>4, verbose_freq = 100)
+        animation_size = 6=>6, verbose_freq = 100)
     train!(dcgan)
 
-    open("discriminator_loss.txt", "w") do io
+    open("result/discriminator_loss.txt", "w") do io
         writedlm(io, dcgan.discriminator_loss_hist)
     end
 
-    open("generator_loss.txt", "w") do io
+    open("result/generator_loss.txt", "w") do io
         writedlm(io, dcgan.generator_loss_hist)
     end
 
-    @save "mnist-dcgan-generator.bson" dcgan.generator
-    @save "mnist-dcgan-discriminator.bson" dcgan.discriminator
+    wts_generator = Tracker.data.(Flux.params(dcgan.generator))
+    wts_discriminator = Tracker.data.(Flux.params(dcgan.discriminator))
+    BSON.@save "result/mnist-dcgan-generator.bson" wts_generator
+    BSON.@save "result/mnist-dcgan-discriminator.bson" wts_discriminator
 end
 
 main()

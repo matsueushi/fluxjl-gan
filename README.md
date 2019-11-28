@@ -27,8 +27,8 @@ Docker version 19.03.4, build 9013bf583a
 ## Run
 It takes a few minites...
 ```shell
-sudo docker build -t matsueushi/humidifier . 
-sudo docker run --name humidifier --gpus all -it -v $PWD:/tmp -w /tmp matsueushi/humidifier:latest julia mnist-gan.jl
+sudo docker build -t matsueushi/flux . 
+sudo docker run --name flux --gpus all -it -v $PWD:/tmp -w /tmp matsueushi/flux:latest julia mnist-gan.jl
 ```
 
 ## References
