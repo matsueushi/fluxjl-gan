@@ -34,30 +34,13 @@ mutable struct DCGAN
     discriminator_loss_hist::Vector{Float32}
 end
 
-function DCGAN(; noise_dim::Int64, channels::Int64, batch_size::Int64, epochs::Int64,
-     animation_size::Pair{Int64, Int64}, verbose_freq::Int64)
-    generator = Chain(
-        Dense(noise_dim, 7 * 7 * 256; initW = glorot_normal),
-        BatchNorm(7 * 7 * 256, leakyrelu),
-        x->reshape(x, 7, 7, 256, :),
-        ConvTranspose((5, 5), 256 => 128; init = glorot_normal, stride = 1, pad = 2),
-        BatchNorm(128, leakyrelu),
-        ConvTranspose((4, 4), 128 => 64; init = glorot_normal, stride = 2, pad = 1),
-        BatchNorm(64, leakyrelu),
-        ConvTranspose((4, 4), 64 => channels, tanh; init = glorot_normal, stride = 2, pad = 1),
-        ) |> gpu
+function DCGAN(; image_vector::Vector{<: AbstractMatrix}, noise_dim::Int64, channels::Int64, batch_size::Int64, epochs::Int64,
+    generator::Chain, discriminator::Chain,
+    animation_size::Pair{Int64, Int64}, verbose_freq::Int64)
 
-    discriminator =  Chain(
-        Conv((4, 4), channels => 64, leakyrelu; init = glorot_normal, stride = 2, pad = 1),
-        Dropout(0.3),
-        Conv((4, 4), 64 => 128, leakyrelu; init = glorot_normal, stride = 2, pad = 1),
-        Dropout(0.3),
-        x->reshape(x, 7 * 7 * 128, :),
-        # drop sigmoid, and use logitbinarycrossentropy (it is more numerically stable)
-        # https://github.com/FluxML/Flux.jl/issues/914
-        Dense(7 * 7 * 128, 1; initW = glorot_normal)) |> gpu 
+    @assert (channels == 1) || (channels == 3)
 
-    data = [reshape(reduce(hcat, channelview.(xs)), 28, 28, 1, :) for xs in partition(MNIST.images(), batch_size)]
+    data = [reshape(reduce(hcat, channelview.(xs)), 28, 28, 1, :) for xs in partition(image_vector, batch_size)]
     data = [2f0 .* gpu(Float32.(xs)) .- 1f0 for xs in data]
 
     animation_noise = randn(Float32, noise_dim, prod(animation_size)) |> gpu
@@ -82,6 +65,15 @@ function discriminator_loss(real_output, fake_output)
     return loss
 end
 
+function convert_to_image(image_array::Matrix{Float32}, channels::Int64)
+    image = @. (image + 1f0) / 2f0
+    if channels == 1
+        return Gray.(image_array)
+    else
+        return colorview(RGB, image_array)
+    end
+end
+
 function save_fake_image(dcgan::DCGAN)
     testmode!(dcgan.generator)
     fake_images = dcgan.generator(dcgan.animation_noise)
@@ -94,8 +86,8 @@ function save_fake_image(dcgan::DCGAN)
         i = n % cols
         tile_image[j * h + 1:(j + 1) * h, i * w + 1:(i + 1) * w] = fake_images[:, :, :, n + 1] |> cpu
     end
-    gray_image = @.  Gray((tile_image + 1f0) / 2f0)
-    save(@sprintf("animation/steps_%06d.png", dcgan.train_steps), gray_image)
+    image = convert_to_image(tile_image, dcgan.channels)
+    save(@sprintf("animation/steps_%06d.png", dcgan.train_steps), image)
 end
 
 function train_discriminator!(dcgan::DCGAN, batch::AbstractArray{Float32, 4})
@@ -153,7 +145,33 @@ function main()
         mkdir("animation")
     end
 
-    dcgan = DCGAN(; noise_dim = 100, channels = 1, batch_size = 128, epochs = 1,
+    noise_dim = 100
+    channels = 1
+
+    generator = Chain(
+        Dense(noise_dim, 7 * 7 * 256; initW = glorot_normal),
+        BatchNorm(7 * 7 * 256, leakyrelu),
+        x->reshape(x, 7, 7, 256, :),
+        ConvTranspose((5, 5), 256 => 128; init = glorot_normal, stride = 1, pad = 2),
+        BatchNorm(128, leakyrelu),
+        ConvTranspose((4, 4), 128 => 64; init = glorot_normal, stride = 2, pad = 1),
+        BatchNorm(64, leakyrelu),
+        ConvTranspose((4, 4), 64 => channels, tanh; init = glorot_normal, stride = 2, pad = 1),
+        ) |> gpu
+
+    discriminator =  Chain(
+        Conv((4, 4), channels => 64, leakyrelu; init = glorot_normal, stride = 2, pad = 1),
+        Dropout(0.3),
+        Conv((4, 4), 64 => 128, leakyrelu; init = glorot_normal, stride = 2, pad = 1),
+        Dropout(0.3),
+        x->reshape(x, 7 * 7 * 128, :),
+        # drop sigmoid, and use logitbinarycrossentropy (it is more numerically stable)
+        # https://github.com/FluxML/Flux.jl/issues/914
+        Dense(7 * 7 * 128, 1; initW = glorot_normal)) |> gpu 
+
+    dcgan = DCGAN(; image_vector = MNIST.images(), noise_dim = noise_dim, 
+        channels = channels, batch_size = 128, epochs = 1,
+        generator = generator, discriminator = discriminator,
         animation_size = 4=>4, verbose_freq = 100)
     train!(dcgan)
 
