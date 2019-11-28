@@ -36,7 +36,8 @@ end
 
 function DCGAN(; noise_dim::Int64, channels::Int64, batch_size::Int64, epochs::Int64,
      animation_size::Pair{Int64, Int64}, verbose_freq::Int64)
-    generator = Chain(Dense(noise_dim, 7 * 7 * 256; initW = glorot_normal),
+    generator = Chain(
+        Dense(noise_dim, 7 * 7 * 256; initW = glorot_normal),
         BatchNorm(7 * 7 * 256, leakyrelu),
         x->reshape(x, 7, 7, 256, :),
         ConvTranspose((5, 5), 256 => 128; init = glorot_normal, stride = 1, pad = 2),
@@ -46,7 +47,8 @@ function DCGAN(; noise_dim::Int64, channels::Int64, batch_size::Int64, epochs::I
         ConvTranspose((4, 4), 64 => channels, tanh; init = glorot_normal, stride = 2, pad = 1),
         ) |> gpu
 
-    discriminator =  Chain(Conv((4, 4), channels => 64, leakyrelu; init = glorot_normal, stride = 2, pad = 1),
+    discriminator =  Chain(
+        Conv((4, 4), channels => 64, leakyrelu; init = glorot_normal, stride = 2, pad = 1),
         Dropout(0.3),
         Conv((4, 4), 64 => 128, leakyrelu; init = glorot_normal, stride = 2, pad = 1),
         Dropout(0.3),

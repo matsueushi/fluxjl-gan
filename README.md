@@ -1,5 +1,5 @@
-Flux-DCGAN
-==========
+Flux.jl-DCGAN
+=============
 
 DCGAN implementation using [Flux.jl](https://fluxml.ai/Flux.jl/stable/)
 
