@@ -49,19 +49,19 @@ RUN set -eux; \
 # https://github.com/FluxML/Flux.jl/issues/918
 RUN julia -e 'import Pkg; \
     Pkg.add([ \
-        "BSON", \
-        "Distributions", \
-        "HDF5", \
-        "JLD", \
-        "FileIO", \
-        "ImageMagick", \
-        "Images", \
-        ]); \
+    "BSON", \
+    "Distributions", \
+    "HDF5", \
+    "JLD", \
+    "FileIO", \
+    "ImageMagick", \
+    "Images", \
+    ]); \
     Pkg.add([ \
-        Pkg.PackageSpec(name="Flux", version="0.9"), \
-        Pkg.PackageSpec(name="CUDAdrv"), \
-        Pkg.PackageSpec(name="CUDAnative"), \
-        Pkg.PackageSpec(name="CuArrays", version="1.3"), \
+    Pkg.PackageSpec(name="Flux", version="0.9"), \
+    Pkg.PackageSpec(name="CUDAdrv"), \
+    Pkg.PackageSpec(name="CUDAnative"), \
+    Pkg.PackageSpec(name="CuArrays", version="1.3"), \
     ]); \
     using BSON, Distributions, HDF5, JLD, FileIO, ImageMagick, Images'
 
