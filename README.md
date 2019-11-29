@@ -31,6 +31,12 @@ sudo docker build -t matsueushi/flux .
 sudo docker run --name flux --gpus all -it -v $PWD:/tmp -w /tmp matsueushi/flux:latest julia mnist-gan.jl
 ```
 
+## Result
+30 epochs (14,000 iterations)  
+![Animation](https://github.com/matsueushi/fluxjl-dcgan/blob/media/media/anim.gif)
+
+![Loss](https://github.com/matsueushi/fluxjl-dcgan/blob/media/media/loss.png)
+
 ## References
 - [Generative Adversarial Networks](https://arxiv.org/abs/1406.2661)
 - [GANについて概念から実装まで　～DCGANによるキルミーベイベー生成～](https://qiita.com/taku-buntu/items/0093a68bfae0b0ff879d)  
