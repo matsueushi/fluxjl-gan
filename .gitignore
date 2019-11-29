@@ -1,3 +1,5 @@
 *.png
 *.txt
 *.bson
+
+.ipynb_checkpoints/

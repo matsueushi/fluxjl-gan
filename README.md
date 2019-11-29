@@ -33,7 +33,9 @@ sudo docker run --name flux --gpus all -it -v $PWD:/tmp -w /tmp matsueushi/flux:
 
 ## Result
 30 epochs (14,000 iterations)  
-![animation](https://github.com/matsueushi/fluxjl-dcgan/blob/media/media/anim.gif)
+![Animation](https://github.com/matsueushi/fluxjl-dcgan/blob/media/media/anim.gif)
+
+![Loss](https://github.com/matsueushi/fluxjl-dcgan/blob/media/media/loss.png)
 
 ## References
 - [Generative Adversarial Networks](https://arxiv.org/abs/1406.2661)
