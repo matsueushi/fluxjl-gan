@@ -9,15 +9,12 @@ Google Cloud Platform, n1-standard-8 + 1 x NVIDIA Tesla K80
 Docker version 19.03.4, build 9013bf583a
 
 ```shell
-(v1.3) pkg> status
+(v1.3) pkg> st
     Status `~/.julia/environments/v1.3/Project.toml`
   [fbb218c0] BSON v0.2.4
-  [c5f51814] CUDAdrv v3.1.0
-  [be33ccc6] CUDAnative v2.4.0
-  [3a865a2d] CuArrays v1.3.0
-  [31c24e10] Distributions v0.21.8
-  [5789e2e9] FileIO v1.0.7
-  [587475ba] Flux v0.9.0
+  [31c24e10] Distributions v0.21.9
+  [5789e2e9] FileIO v1.1.0
+  [587475ba] Flux v0.10.0
   [f67ccb44] HDF5 v0.12.5
   [6218d12a] ImageMagick v0.7.5
   [916415d5] Images v0.18.0
@@ -28,7 +25,8 @@ Docker version 19.03.4, build 9013bf583a
 It takes a few minites...
 ```shell
 sudo docker build -t matsueushi/flux . 
-sudo docker run --name flux --gpus all -it -v $PWD:/tmp -w /tmp matsueushi/flux:latest julia mnist-gan.jl
+sudo docker run --name flux --gpus all -it -v $PWD:/tmp -w /tmp matsueushi/flux:latest /bin/bash
+julia mnist-dcgan.jl
 ```
 
 ## Result

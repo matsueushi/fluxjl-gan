@@ -1,11 +1,10 @@
 using BSON
 using Base.Iterators: partition
-using CuArrays
 using DelimitedFiles
 using Flux
 using Flux.Data.MNIST
-using Flux.Tracker: update!, zero_grad!, grad, gradient
-using Flux: logitbinarycrossentropy, testmode!, glorot_normal 
+using Flux.Optimise: update!
+using Flux: logitbinarycrossentropy, glorot_normal, gradient, grad
 using Images
 using Statistics
 using Printf
@@ -49,11 +48,6 @@ function DCGAN(; image_vector::Vector{<: AbstractMatrix}, noise_dim::Int64, chan
         animation_size, animation_noise, 0, verbose_freq, Vector{Float32}(), Vector{Float32}())
 end
 
-# Redefine logitbinarycrossentropy to avoid GPU error
-# https://github.com/FluxML/Flux.jl/issues/464
-# https://github.com/FluxML/Flux.jl/pull/940
-CuArrays.@cufunc logitbinarycrossentropy(logŷ, y) = (1 - y) * logŷ - logσ(logŷ)
-
 function generator_loss(fake_output)
     loss = mean(logitbinarycrossentropy.(fake_output, 1f0))
 end
@@ -75,16 +69,16 @@ function convert_to_image(image_array::Matrix{Float32}, channels::Int64)
 end
 
 function save_fake_image(dcgan::DCGAN)
-    testmode!(dcgan.generator)
+    @eval Flux.istraining() = false
     fake_images = dcgan.generator(dcgan.animation_noise)
-    testmode!(dcgan.generator, false)
+    @eval Flux.istraining() = true
     h, w, _, _ = size(fake_images)
     rows, cols = dcgan.animation_size.first, dcgan.animation_size.second
     tile_image = Matrix{Float32}(undef, h * rows, w * cols)
     for n in 0:prod(dcgan.animation_size) - 1
         j = n ÷ rows
         i = n % cols
-        tile_image[j * h + 1:(j + 1) * h, i * w + 1:(i + 1) * w] = fake_images[:, :, :, n + 1].data |> cpu
+        tile_image[j * h + 1:(j + 1) * h, i * w + 1:(i + 1) * w] = fake_images[:, :, :, n + 1] |> cpu
     end
     image = convert_to_image(tile_image, dcgan.channels)
     save(@sprintf("animation/steps_%06d.png", dcgan.train_steps), image)
@@ -103,7 +97,7 @@ function train_discriminator!(dcgan::DCGAN, batch::AbstractArray{Float32, 4})
     
     # zero out generator gradient
     # https://github.com/FluxML/model-zoo/pull/111
-    zero_grad!.(grad.(Flux.params(dcgan.generator)))
+    grad.(Flux.params(dcgan.generator)) .= 0f0
     return disc_loss
 end
 
@@ -126,11 +120,9 @@ function train!(dcgan::DCGAN)
             gen_loss = train_generator!(dcgan, batch)
 
             if dcgan.train_steps % dcgan.verbose_freq == 0
-                disc_loss_data = disc_loss.data
-                gen_loss_data = gen_loss.data
-                push!(dcgan.discriminator_loss_hist, disc_loss_data)
-                push!(dcgan.generator_loss_hist, gen_loss_data)
-                @info("Train step $(dcgan.train_steps), Discriminator loss: $(disc_loss_data), Generator loss: $(gen_loss_data)")
+                push!(dcgan.discriminator_loss_hist, disc_loss)
+                push!(dcgan.generator_loss_hist, gen_loss)
+                @info("Train step $(dcgan.train_steps), Discriminator loss: $(disc_loss), Generator loss: $(gen_loss)")
                 # create fake images for animation
                 save_fake_image(dcgan)
             end
@@ -141,6 +133,7 @@ end
 
 
 function main()
+    @info "start..."
     if !isdir("animation")
         mkdir("animation")
     end
@@ -187,8 +180,8 @@ function main()
         writedlm(io, dcgan.generator_loss_hist)
     end
 
-    wts_generator = Tracker.data.(Flux.params(dcgan.generator))
-    wts_discriminator = Tracker.data.(Flux.params(dcgan.discriminator))
+    wts_generator = Flux.params(dcgan.generator)
+    wts_discriminator = Flux.params(dcgan.discriminator)
     BSON.@save "result/mnist-dcgan-generator.bson" wts_generator
     BSON.@save "result/mnist-dcgan-discriminator.bson" wts_discriminator
 end
