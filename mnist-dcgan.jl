@@ -4,7 +4,7 @@ using DelimitedFiles
 using Flux
 using Flux.Data.MNIST
 using Flux.Optimise: update!
-using Flux: logitbinarycrossentropy, glorot_normal, gradient, grad
+using Flux: logitbinarycrossentropy, glorot_normal
 using Images
 using Statistics
 using Printf
@@ -92,12 +92,10 @@ function train_discriminator!(dcgan::DCGAN, batch::AbstractArray{Float32, 4})
     real_output = dcgan.discriminator(batch)
 
     disc_loss = discriminator_loss(real_output, fake_output)
+    # disc_grad = gradient(()->disc_loss, Flux.params(dcgan.discriminator))
     disc_grad = gradient(()->disc_loss, Flux.params(dcgan.discriminator))
     update!(dcgan.discriminator_optimizer, Flux.params(dcgan.discriminator), disc_grad)
     
-    # zero out generator gradient
-    # https://github.com/FluxML/model-zoo/pull/111
-    grad.(Flux.params(dcgan.generator)) .= 0f0
     return disc_loss
 end
 
