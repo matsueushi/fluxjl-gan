@@ -60,6 +60,6 @@ RUN julia -e 'import Pkg; \
     Pkg.add([ \
     Pkg.PackageSpec(name="Flux", version="0.10"), \
     ]); \
-    using BSON, Distributions, HDF5, JLD, FileIO, ImageMagick, Images'
+    using BSON, Distributions, HDF5, JLD, FileIO, ImageMagick, Images, Flux'
 
 CMD ["julia"]
