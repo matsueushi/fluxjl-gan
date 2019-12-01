@@ -6,7 +6,7 @@ DCGAN implementation using [Flux.jl](https://fluxml.ai/Flux.jl/stable/)
 
 ## Environment
 Google Cloud Platform, n1-standard-8 + 1 x NVIDIA Tesla K80  
-Docker version 19.03.4, build 9013bf583a
+Docker version 19.03.4, build 9013bf583a  
 Julia 1.3.0, Flux 0.10.0
 
 ```shell
