@@ -45,8 +45,10 @@ function DCGAN(; image_vector::Vector{<: AbstractMatrix}, noise_dim::Int64, chan
     DCGAN(noise_dim, channels, batch_size, generator, discriminator, ADAM(0.0001f0), ADAM(0.0001f0), data, 
         animation_size, animation_noise, 0, verbose_freq, Vector{Float32}(), Vector{Float32}())
 end
+
 function generator_loss(fake_output)
     loss = mean(logitbinarycrossentropy.(fake_output, 1f0))
+    return loss 
 end
 
 function discriminator_loss(real_output, fake_output)
