@@ -1,4 +1,3 @@
-using BSON
 using Base.Iterators: partition
 using DelimitedFiles
 using Flux
@@ -76,7 +75,7 @@ function save_fake_image(dcgan::DCGAN)
     for n in 0:prod(dcgan.animation_size) - 1
         j = n ÷ rows
         i = n % cols
-        tile_image[j * h + 1:(j + 1) * h, i * w + 1:(i + 1) * w] = fake_images[:, :, :, n + 1].data |> cpu
+        tile_image[j * h + 1:(j + 1) * h, i * w + 1:(i + 1) * w] = fake_images[:, :, :, n + 1] |> cpu
     end
     image = convert_to_image(tile_image, dcgan.channels)
     save(@sprintf("animation/steps_%06d.png", dcgan.train_steps), image)
@@ -166,10 +165,6 @@ function main()
         writedlm(io, dcgan.generator_loss_hist)
     end
 
-    wts_generator = Flux.params(dcgan.generator)
-    wts_discriminator = Flux.params(dcgan.discriminator)
-    BSON.@save "result/mnist-dcgan-generator.bson" wts_generator
-    BSON.@save "result/mnist-dcgan-discriminator.bson" wts_discriminator
 end
 
 main()
