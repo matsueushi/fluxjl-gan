@@ -32,7 +32,7 @@ mutable struct DCGAN
     discriminator_loss_hist::Vector{Float32}
 end
 
-function DCGAN(; image_vector::Vector{<: AbstractMatrix}, noise_dim::Int64, channels::Int64, batch_size::Int64, epochs::Int64,
+function DCGAN(; image_vector::Vector{<: AbstractMatrix}, noise_dim::Int64, channels::Int64, batch_size::Int64, 
     generator::Chain, discriminator::Chain,
     animation_size::Pair{Int64, Int64}, verbose_freq::Int64)
 
@@ -43,7 +43,7 @@ function DCGAN(; image_vector::Vector{<: AbstractMatrix}, noise_dim::Int64, chan
 
     animation_noise = randn(Float32, noise_dim, prod(animation_size)) |> gpu
 
-    DCGAN(noise_dim, channels, batch_size, epochs, generator, discriminator, ADAM(0.0001f0), ADAM(0.0001f0), data, 
+    DCGAN(noise_dim, channels, batch_size, generator, discriminator, ADAM(0.0001f0), ADAM(0.0001f0), data, 
         animation_size, animation_noise, 0, verbose_freq, Vector{Float32}(), Vector{Float32}())
 end
 function generator_loss(fake_output)
@@ -156,7 +156,7 @@ function main()
         channels = channels, batch_size = 128,
         generator = generator, discriminator = discriminator,
         animation_size = 6=>6, verbose_freq = 100)
-    train!(dcgan, epochs = 30)
+    train!(dcgan, 30)
 
     open("result/discriminator_loss.txt", "w") do io
         writedlm(io, dcgan.discriminator_loss_hist)
