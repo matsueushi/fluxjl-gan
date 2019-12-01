@@ -45,8 +45,6 @@ RUN set -eux; \
     julia --version
 
 # install packages
-# downgrade CuArrays to 1.3
-# https://github.com/FluxML/Flux.jl/issues/918
 RUN julia -e 'import Pkg; \
     Pkg.add([ \
     "BSON", \
