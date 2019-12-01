@@ -58,10 +58,7 @@ RUN julia -e 'import Pkg; \
     "Images", \
     ]); \
     Pkg.add([ \
-    Pkg.PackageSpec(name="Flux", version="0.9"), \
-    Pkg.PackageSpec(name="CUDAdrv"), \
-    Pkg.PackageSpec(name="CUDAnative"), \
-    Pkg.PackageSpec(name="CuArrays", version="1.3"), \
+    Pkg.PackageSpec(name="Flux", version="0.10"), \
     ]); \
     using BSON, Distributions, HDF5, JLD, FileIO, ImageMagick, Images'
 
