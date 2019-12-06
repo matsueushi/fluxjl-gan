@@ -26,7 +26,7 @@ Julia 1.3.0, Flux 0.10.0
 ```shell
 sudo docker build -t matsueushi/flux . 
 sudo docker run --name flux --gpus all -it -v $PWD:/tmp -w /tmp matsueushi/flux:latest /bin/bash
-julia mnist-dcgan.jl
+julia src/mnist-dcgan.jl
 ```
 
 ## Result

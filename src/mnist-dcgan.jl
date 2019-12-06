@@ -8,6 +8,8 @@ using Images
 using Statistics
 using Printf
 
+animation_dir = "mnist-dcgan-animation"
+result_dir = "mnist-dcgan-results"
 
 mutable struct DCGAN
     noise_dim::Int64
@@ -80,7 +82,7 @@ function save_fake_image(dcgan::DCGAN)
         tile_image[j * h + 1:(j + 1) * h, i * w + 1:(i + 1) * w] = fake_images[:, :, :, n + 1] |> cpu
     end
     image = convert_to_image(tile_image, dcgan.channels)
-    save(@sprintf("animation/steps_%06d.png", dcgan.train_steps), image)
+    save(@sprintf("%s/steps_%06d.png", result_dir, dcgan.train_steps), image)
 end
 
 function train_discriminator!(dcgan::DCGAN, batch::AbstractArray{Float32, 4})
@@ -121,12 +123,12 @@ end
 
 
 function main()
-    if !isdir("animation")
-        mkdir("animation")
+    if !isdir(animation_dir)
+        mkdir(animation_dir)
     end
 
-    if !isdir("result")
-        mkdir("result")
+    if !isdir(result_dir)
+        mkdir(result_dir)
     end
 
     noise_dim = 100
@@ -159,11 +161,11 @@ function main()
         animation_size = 6=>6, verbose_freq = 100)
     train!(dcgan, 30)
 
-    open("result/discriminator_loss.txt", "w") do io
+    open(@sprintf("%s/discriminator_loss.txt", result_dir), "w") do io
         writedlm(io, dcgan.discriminator_loss_hist)
     end
 
-    open("result/generator_loss.txt", "w") do io
+    open(@sprintf("%s/generator_loss.txt", result_dir), "w") do io
         writedlm(io, dcgan.generator_loss_hist)
     end
 
