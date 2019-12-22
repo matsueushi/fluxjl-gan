@@ -1,7 +1,7 @@
 Flux.jl-DCGAN
 =============
 
-DCGAN implementation using [Flux.jl](https://fluxml.ai/Flux.jl/stable/)
+DCGAN implementation with [Flux.jl](https://fluxml.ai/Flux.jl/stable/)
 
 
 ## Environment
@@ -45,7 +45,7 @@ julia src/mnist-dcgan.jl
 Flux implementation
 - [Added Condtional GAN and DCGAN tutorial #111](https://github.com/FluxML/model-zoo/pull/111)
   
-Implementations of other frameworks
+Implementations with other frameworks
  - [Tensorflow tutorial](https://www.tensorflow.org/tutorials/generative/dcgan)
  - [znxlwm/tensorflow-MNIST-GAN-DCGAN](https://github.com/znxlwm/tensorflow-MNIST-GAN-DCGAN)
  - [PyTorch tutorial](https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html)
