@@ -3,6 +3,8 @@ Flux.jl-DCGAN
 
 DCGAN implementation with [Flux.jl](https://fluxml.ai/Flux.jl/stable/)
 
+model-zoo includes a DCGAN model based on this: https://github.com/FluxML/model-zoo
+
 
 ## Environment
 Google Cloud Platform, n1-standard-8 + 1 x NVIDIA Tesla K80  
